@@ -299,6 +299,51 @@ namespace kOS.AddOns.kOSEVA
             flag.placedBy = kerbaleva.vessel.vesselName;
             flag.PlaqueText = flagtext.ToString();
             flag.vessel.vesselName = flagname;
+
+            kerbaleva.part.protoModuleCrew[0].flightLog.AddEntryUnique(FlightLog.EntryType.PlantFlag, kerbaleva.vessel.orbit.referenceBody.name);
+            kerbaleva.part.protoModuleCrew[0].UpdateExperience();
+            int count = FlightGlobals.VesselsLoaded.Count;
+            while (count-- > 0)
+            {
+                Vessel vessel = FlightGlobals.VesselsLoaded[count];
+                if (vessel == null)
+                {
+                    continue;
+                }
+                if (!vessel.loaded)
+                {
+                    continue;
+                }
+                if (vessel == FlightGlobals.ActiveVessel)
+                {
+                    continue;
+                }
+                if (vessel.vesselType == VesselType.EVA)
+                {
+                    ProtoCrewMember protoCrewMember = vessel.GetVesselCrew()[0];
+                    protoCrewMember.flightLog.AddEntryUnique(FlightLog.EntryType.PlantFlag, kerbaleva.vessel.orbit.referenceBody.name);
+                    protoCrewMember.UpdateExperience();
+                    continue;
+                }
+                if (vessel.situation != Vessel.Situations.LANDED)
+                {
+                    if (vessel.situation != Vessel.Situations.SPLASHED)
+                    {
+                        if (vessel.situation != Vessel.Situations.PRELAUNCH)
+                        {
+                            continue;
+                        }
+                    }
+                }
+                List<ProtoCrewMember> vesselCrew = vessel.GetVesselCrew();
+                int count2 = vesselCrew.Count;
+                while (count2-- > 0)
+                {
+                    ProtoCrewMember protoCrewMember2 = vesselCrew[count2];
+                    protoCrewMember2.flightLog.AddEntryUnique(FlightLog.EntryType.PlantFlag, kerbaleva.vessel.orbit.referenceBody.name);
+                    protoCrewMember2.UpdateExperience();
+                }
+            }
         }
 
         /*
