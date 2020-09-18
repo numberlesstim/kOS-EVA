@@ -55,7 +55,7 @@ public static class KerbalEVAUtility
 		}
 		return events;
 	}
-	public static void RunEvent(this KerbalEVA eva, string name)
+	public static void RunEvent(KerbalEVA eva, string name)
 	{
         var kfsme = eva.fsm.CurrentState.StateEvents.Where(f => f.name.ToLower() == name.ToLower()).First();
 		if (kfsme != null)
@@ -64,7 +64,7 @@ public static class KerbalEVAUtility
 			Debug.LogError ("[assembly: " + Assembly.GetExecutingAssembly ().GetName().Name + "]:" + "Event " + name + " not found");
 		
 	}
-	public static void RunEvent(this KerbalFSM fsm, string name)
+	public static void RunEvent(KerbalFSM fsm, string name)
 	{
 		foreach (var kfsme in fsm.CurrentState.StateEvents)
 		{
