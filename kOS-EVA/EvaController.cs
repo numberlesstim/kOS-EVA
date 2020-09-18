@@ -223,11 +223,11 @@ namespace EVAMove
             switch (order)
             { 
                 case Command.Up:
-                    eva.vessel.transform.position += eva.ladderClimbSpeed * dtime * eva.vessel.transform.up;
+                    eva.vessel.transform.position += eva.ladderClimbSpeed * dtime * eva.ladderPivot.up;
                     tgtanimation = "ladder_up";
                     break;
                 case Command.Down:
-                    eva.vessel.transform.position -= eva.ladderClimbSpeed * dtime * eva.vessel.transform.up;
+                    eva.vessel.transform.position -= eva.ladderClimbSpeed * dtime * eva.ladderPivot.up;
                     tgtanimation = "ladder_down";
                     break;
                 case Command.Stop:
