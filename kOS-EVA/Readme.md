@@ -146,12 +146,23 @@ Runs a animation by its \<name\> shown by *:animationlist*.
 Stops the Animation named \<name\>.
 
  
-**:STOPALLANIMATIONS"** 
+**:STOPALLANIMATIONS** 
 
 Stops all Animations and returns the kerbal to his idle state.
 
 
+**:DUMPEXPERIMENTS**
+
+Dumps all experiment data carried by the kerbal.
+
 ## Changelog
+### 0.1.2
+* Updated for KSP 1.8 - 1.10
+* Add DUMPEXPERIMENTS suffix
+* Planting a flag now grants XP (and to kerbals in nearby landed vessels)
+* Increase kerbal disk space to 5000 from 500
+* Some attempts at better animation and ladder control, though not very effective
+
 ### 0.1.1
 * .version File update
 * Animationchanges should be more smoothed out.
