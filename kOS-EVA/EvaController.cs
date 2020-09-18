@@ -138,7 +138,9 @@ namespace EVAMove
         void Update()
         {
             if (initialized == false) { Initialize(); }
-            if (tgtanimation != currentanimation)
+            Animation _kerbalanimation = null;
+            eva.vessel.GetComponentCached<Animation>(ref _kerbalanimation);
+            if (!_kerbalanimation.IsPlaying(tgtanimation))
             {
                 StopAllAnimations();
                 PlayAnimation(tgtanimation);
