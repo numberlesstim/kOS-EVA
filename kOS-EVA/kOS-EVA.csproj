@@ -73,10 +73,6 @@
     <Compile Include="KerbalEVAUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="kOS-EVA.version" />
-    <None Include="Readme.md" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy $(TargetPath) $(SolutionDir)GameData\kOS-EVA\Plugins\$(TargetFileName)</PostBuildEvent>
