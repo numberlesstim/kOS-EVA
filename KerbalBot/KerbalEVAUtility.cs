@@ -57,7 +57,7 @@ public static class KerbalEVAUtility
 	}
 	public static void RunEvent(this KerbalEVA eva, string name)
 	{
-        var kfsme = eva.fsm.CurrentState.StateEvents.Where(f => f.name.ToLower() == name.ToLower()).First();
+		var kfsme = eva.fsm.CurrentState.StateEvents.Where(f => f.name.ToLower() == name.ToLower()).First();
 		if (kfsme != null)
 			eva.fsm.RunEvent (kfsme);
 		else
