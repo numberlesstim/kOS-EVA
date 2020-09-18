@@ -47,6 +47,7 @@ namespace kOS.AddOns.kOSEVA
             AddSuffix("STOPANIMATION", new OneArgsSuffix<StringValue>(StopAnimation, "Stops the Animation"));
             AddSuffix("STOPALLANIMATIONS", new NoArgsVoidSuffix(StopAllAnimations, "Stops all Animations"));
             AddSuffix(new[] { "GOEVA", "EVA" }, new OneArgsSuffix<CrewMember>(GoEVA, "Compliments a Kerbal to the Outside"));
+            AddSuffix("DUMPEXPERIMENTS", new NoArgsVoidSuffix(DumpExperiments));
             
 
             // Set a default bootfilename, when no other has been set.
@@ -63,7 +64,29 @@ namespace kOS.AddOns.kOSEVA
 #endif
 
         }
+
+        private void DumpExperiments()
+        {
+            if (!shared.Vessel.isEVA) return;
+
+            shared.Vessel.rootPart.GetComponentCached<ModuleScienceContainer>(ref scienceContainer);
+
+            foreach (var data in scienceContainer.GetData())
+            {
+                scienceContainer.DumpData(data);
+            }
+
+            foreach (var experiment in shared.Vessel.rootPart.Modules.GetModules<ModuleScienceExperiment>())
+            {
+                if (experiment.resettable)
+                {
+                    experiment.ResetExperiment();
+                }
+            }
+        }
+
         internal Module.kOSProcessor _myprocessor = null;
+        internal ModuleScienceContainer scienceContainer;
         public KerbalEVA kerbaleva = null;
         internal EvaController evacontrol = null;
         internal bool rcs_state = false;
