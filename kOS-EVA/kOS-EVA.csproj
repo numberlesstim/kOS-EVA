@@ -33,17 +33,33 @@
     <Prefer32Bit>false</Prefer32Bit>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
+  <!--Import targets now, which will import the .csproj.user where the path to the KSP install root must be defined in ReferencePath-->
+  <!--This must be done after the main project poperties are defined because it needs the target framework property to be defined -->
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!--Parse KSP platform-specific paths and set the start action-->
+  <PropertyGroup>
+    <KSPExecutable Condition="$([MSBuild]::IsOsPlatform('Windows'))">KSP_x64.exe</KSPExecutable>
+    <KSPExecutable Condition="$([MSBuild]::IsOsPlatform('OSX'))">KSP.app</KSPExecutable>
+    <KSPExecutable Condition="$([MSBuild]::IsOsPlatform('Linux'))">KSP.x86_64</KSPExecutable>
+    <ManagedRelativePath Condition="$([MSBuild]::IsOsPlatform('Windows'))">KSP_x64_Data\Managed</ManagedRelativePath>
+    <ManagedRelativePath Condition="$([MSBuild]::IsOsPlatform('OSX'))">KSP.app\Contents\Resources\Data\Managed</ManagedRelativePath>
+    <ManagedRelativePath Condition="$([MSBuild]::IsOsPlatform('Linux'))">KSP_Data\Managed</ManagedRelativePath>
+    <ManagedPath>$(ReferencePath)$(ManagedRelativePath)</ManagedPath>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(ReferencePath)$(KSPExecutable)</StartProgram>
+    <StartWorkingDirectory>$(ReferencePath)</StartWorkingDirectory>
+  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
+    <Reference Include="$(ManagedPath)\Assembly-CSharp.dll">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="$(ManagedPath)\Assembly-CSharp-firstpass.dll">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="$(ReferencePath)GameData\kOS\Plugins\kOS.dll">
       <Private>False</Private>
     </Reference>
-    <Reference Include="Assembly-CSharp-firstpass">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="kOS">
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="kOS.Safe">
+    <Reference Include="$(ReferencePath)GameData\kOS\Plugins\kOS.Safe.dll">
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -51,19 +67,19 @@
     <Reference Include="UnityEngine">
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.AnimationModule">
+    <Reference Include="$(ManagedPath)\UnityEngine.AnimationModule.dll">
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.CoreModule">
+    <Reference Include="$(ManagedPath)\UnityEngine.CoreModule.dll">
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.InputLegacyModule">
+    <Reference Include="$(ManagedPath)\UnityEngine.InputLegacyModule.dll">
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.PhysicsModule">
+    <Reference Include="$(ManagedPath)\UnityEngine.PhysicsModule.dll">
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.UI">
+    <Reference Include="$(ManagedPath)\UnityEngine.UI.dll">
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -74,7 +90,6 @@
     <Compile Include="KerbalEVAUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy $(TargetPath) $(SolutionDir)GameData\kOS-EVA\Plugins\$(TargetFileName)</PostBuildEvent>
   </PropertyGroup>
