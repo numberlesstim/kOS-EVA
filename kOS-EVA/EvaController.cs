@@ -8,6 +8,42 @@ using kOS.Suffixed;
 
 using kOS.Safe.Encapsulation;
 using kOS.Safe.Encapsulation.Suffixes;
+using HarmonyLib;
+
+namespace kOSEVA
+{
+	[KSPAddon(KSPAddon.Startup.Instantly, true)]
+	public class EvaControllerPatch : MonoBehaviour
+	{
+		void Awake()
+		{
+			var harmony = new Harmony("kOSEVA");
+			harmony.PatchAll(Assembly.GetExecutingAssembly());
+		}
+
+		[HarmonyPatch(typeof(KerbalEVA), "HandleMovementInput")]
+		class KerbalEVA_HandleMovementInput_Patch
+		{
+			static void Prefix(KerbalEVA __instance)
+			{
+				if (!__instance.VesselUnderControl)
+				{
+					return;
+				}
+
+				__instance.CharacterFrameModeToggle = true;
+			}
+		}
+	}
+
+	public class EvaController : PartModule
+	{
+		internal void HandleMovementInput_Prefix(KerbalEVA)
+	}
+
+}
+
+#if false
 
 namespace EVAMove
 {
@@ -403,3 +439,5 @@ namespace EVAMove
 
 	}
 }
+
+#endif
