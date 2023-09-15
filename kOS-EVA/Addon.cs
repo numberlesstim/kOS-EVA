@@ -50,6 +50,8 @@ namespace kOS.AddOns.kOSEVA
 			AddSuffix("STOPALLANIMATIONS", new NoArgsVoidSuffix(StopAllAnimations, "Stops all Animations"));
 			AddSuffix(new[] { "GOEVA", "EVA" }, new OneArgsSuffix<CrewMember>(GoEVA, "Compliments a Kerbal to the Outside"));
 			AddSuffix("DUMPEXPERIMENTS", new NoArgsVoidSuffix(DumpExperiments));
+			AddSuffix("NEUTRALIZE", new SetSuffix<BooleanValue>(() => evacontrol.Neutralize, value => evacontrol.Neutralize = value));
+
 			
 
 			// Set a default bootfilename, when no other has been set.
@@ -476,30 +478,52 @@ namespace kOS.AddOns.kOSEVA
 
 			Command command = (Command)Enum.Parse(typeof(Command), direction, true);
 			Debug.Log("EVA Command: " + command.ToString());
-			this.evacontrol.order = command;
+			
+			switch (command)
+			{
+				case Command.Forward:
+					evacontrol.MovementThrottle = new Vector3(0, 0, 1);
+					break;
+				case Command.Backward:
+					evacontrol.MovementThrottle = new Vector3(0, 0, -1);
+					break;
+				case Command.Left:
+					evacontrol.MovementThrottle = new Vector3(-1, 0, 0);
+					break;
+				case Command.Right:
+					evacontrol.MovementThrottle = new Vector3(1, 0, 0);
+					break;
+				case Command.Up:
+					evacontrol.MovementThrottle = new Vector3(0, 1, 0);
+					break;
+				case Command.Down:
+					evacontrol.MovementThrottle = new Vector3(0, -1, 0);
+					break;
+				case Command.LookAt:
+				case Command.Stop:
+					evacontrol.MovementThrottle = Vector3.zero;
+					break;
+			}
 		}
 
 		private void TurnLeft(ScalarValue degrees)
 		{
 			if (!shared.Vessel.isEVA) { return; }
 			CheckEvaController();
-			this.evacontrol.lookdirection = v_rotate(kerbaleva.vessel.transform.forward, kerbaleva.vessel.transform.right, -degrees.GetDoubleValue());
-			this.evacontrol.order = Command.LookAt;
+			this.evacontrol.LookDirection = v_rotate(kerbaleva.vessel.transform.forward, kerbaleva.vessel.transform.right, -degrees.GetDoubleValue());
 		}
 		private void TurnRight(ScalarValue degrees)
 		{
 			if (!shared.Vessel.isEVA) { return; }
 			CheckEvaController();
-			this.evacontrol.lookdirection = v_rotate(kerbaleva.vessel.transform.forward, kerbaleva.vessel.transform.right, degrees.GetDoubleValue());
-			this.evacontrol.order = Command.LookAt;
+			this.evacontrol.LookDirection = v_rotate(kerbaleva.vessel.transform.forward, kerbaleva.vessel.transform.right, degrees.GetDoubleValue());
 		}
 
 		private void TurnTo(Vector direction)
 		{
 			if (!shared.Vessel.isEVA) { return; }
 			CheckEvaController();
-			this.evacontrol.lookdirection = direction.ToVector3D();
-			this.evacontrol.order = Command.LookAt;
+			this.evacontrol.LookDirection = direction.ToVector3D();
 		}
 		#endregion
 

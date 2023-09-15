@@ -10,8 +10,20 @@ using kOS.Safe.Encapsulation;
 using kOS.Safe.Encapsulation.Suffixes;
 using HarmonyLib;
 
-namespace kOSEVA
+namespace EVAMove
 {
+	public enum Command
+	{
+		Forward,
+		Backward,
+		Left,
+		Right,
+		Up,
+		Down,
+		LookAt,
+		Stop
+	}
+
 	[KSPAddon(KSPAddon.Startup.Instantly, true)]
 	public class EvaControllerPatch : MonoBehaviour
 	{
@@ -26,19 +38,107 @@ namespace kOSEVA
 		{
 			static void Prefix(KerbalEVA __instance)
 			{
-				if (!__instance.VesselUnderControl)
-				{
-					return;
-				}
+				var evaController = __instance.part.FindModuleImplementing<EvaController>();
 
-				__instance.CharacterFrameModeToggle = true;
+				if (evaController != null)
+				{
+					evaController.HandleMovementInput_Prefix();
+				}
+			}
+
+			static void Postfix(KerbalEVA __instance)
+			{
+				var evaController = __instance.part.FindModuleImplementing<EvaController>();
+
+				if (evaController != null)
+				{
+					evaController.HandleMovementInput_Postfix();
+				}
 			}
 		}
 	}
 
 	public class EvaController : PartModule
 	{
-		internal void HandleMovementInput_Prefix(KerbalEVA)
+		public Vector3 MovementThrottle
+		{
+			get { return m_movementThrottle; }
+			set
+			{
+				if (!m_kosControl)
+				{
+					m_lookDirection = m_kerbalEVA.transform.forward;
+					m_kosControl = true;
+				}
+
+				m_movementThrottle = value;
+			}
+		} 
+
+		public Vector3 LookDirection
+		{
+			get { return m_lookDirection; }
+			set
+			{
+				if (!m_kosControl)
+				{
+					m_movementThrottle = Vector3.zero;
+					m_kosControl = true;
+				}
+
+				m_lookDirection = value;
+			}
+		}
+
+		public bool Neutralize
+		{
+			get { return !m_kosControl; }
+			set { m_kosControl = !value; }
+		}
+
+		Vector3 m_movementThrottle;
+		Vector3 m_lookDirection;
+
+		KerbalEVA m_kerbalEVA;
+		bool m_kosControl;
+
+		public override void OnAwake()
+		{
+			base.OnAwake();
+			m_kerbalEVA = part.FindModuleImplementing<KerbalEVA>();
+		}
+
+		internal void HandleMovementInput_Prefix()
+		{
+			m_kerbalEVA.CharacterFrameModeToggle = m_kosControl;
+
+			if (!m_kosControl) return;
+
+			Vector3 tgtRpos =
+				MovementThrottle.z * m_kerbalEVA.transform.forward +
+				MovementThrottle.x * m_kerbalEVA.transform.right;
+
+			Vector3 packTgtRpos = tgtRpos + MovementThrottle.y * m_kerbalEVA.transform.up;
+
+			m_kerbalEVA.tgtRpos = tgtRpos;
+			m_kerbalEVA.packTgtRPos = packTgtRpos;
+			m_kerbalEVA.ladderTgtRPos = packTgtRpos; // for now, same as jetpack (so up/down match)
+		}
+
+		internal void HandleMovementInput_Postfix()
+		{
+			if (!m_kosControl) return;
+
+			// rotation needs to be done after the main method or else it will get overwritten
+			m_kerbalEVA.tgtFwd = m_lookDirection;
+
+			if (m_kerbalEVA.tgtRpos == Vector3.zero)
+			{
+				m_kerbalEVA.tgtRpos = m_lookDirection * 0.0001f;
+			}
+
+			// parachuteInput gets cleared in handleMovementInput, so we need to set it in postfix
+		}
 	}
 
 }
@@ -47,17 +147,7 @@ namespace kOSEVA
 
 namespace EVAMove
 {
-	public enum Command
-	{
-		Forward,
-		Backward,
-		Left,
-		Right,
-		Up,
-		Down,
-		LookAt,
-		Stop
-	}
+
 	public class EvaController : PartModule
 	{
 
