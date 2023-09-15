@@ -71,6 +71,7 @@ namespace EVAMove
 					m_kosControl = true;
 				}
 
+				// TODO: does this need clamping...?
 				m_movementThrottle = value;
 			}
 		} 
@@ -86,7 +87,7 @@ namespace EVAMove
 					m_kosControl = true;
 				}
 
-				m_lookDirection = value;
+				m_lookDirection = value.normalized;
 			}
 		}
 
@@ -132,7 +133,8 @@ namespace EVAMove
 			// rotation needs to be done after the main method or else it will get overwritten
 			m_kerbalEVA.tgtFwd = m_lookDirection;
 
-			if (m_kerbalEVA.tgtRpos == Vector3.zero)
+			// the movement code will not try to turn in place if tgtRPos is zero
+			if (m_kerbalEVA.tgtRpos == Vector3.zero && Vector3.Dot(LookDirection, m_kerbalEVA.transform.forward) < 0.999f)
 			{
 				m_kerbalEVA.tgtRpos = m_lookDirection * 0.0001f;
 			}
