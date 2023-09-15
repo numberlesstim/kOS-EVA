@@ -62,7 +62,7 @@
     <Reference Include="$(ReferencePath)GameData\kOS\Plugins\kOS.dll">
       <Private>False</Private>
     </Reference>
-    <Reference Include="$(ReferencePath)GameData\kOS\Plugins\kOS.Safe">
+    <Reference Include="$(ReferencePath)GameData\kOS\Plugins\kOS.Safe.dll">
       <Private>False</Private>
     </Reference>
     <Reference Include="$(ReferencePath)GameData\RemoteTech\Plugins\RemoteTech.dll">
