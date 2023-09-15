@@ -11,32 +11,6 @@ using UnityEngine;
 /// </summary>
 public static class KerbalEVAUtility
 {
-	/// <summary>
-	/// Adds a part module to the kerbalEVA and kerbalEVAfemale parts
-	/// </summary>
-	public static void AddPartModule(string moduleName)
-	{
-		AddModule ("kerbalEVA", moduleName);
-		AddModule ("kerbalEVAfemale", moduleName);
-	}
-	private static void AddModule(string partName, string moduleName)
-	{
-		Debug.Log ("Adding" + moduleName + " to part " + partName);
-
-		foreach (var aPart in PartLoader.LoadedPartsList)
-		{
-			if (aPart.name != partName)
-				continue;
-
-			try
-			{
-				aPart.partPrefab.AddModule (moduleName);
-			}
-			catch {}
-			Debug.Log ("Added " + moduleName + " to part " + partName + " successfully");
-		}
-	}
-
 	public static List<KFSMState> GetEVAStates(KerbalEVA eva)
 	{
 		var fsm = eva.fsm;
