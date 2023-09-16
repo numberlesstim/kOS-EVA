@@ -53,8 +53,12 @@ namespace kOS.AddOns.kOSEVA
 			AddSuffix(new[] { "GOEVA", "EVA" }, new OneArgsSuffix<CrewMember>(GoEVA, "Compliments a Kerbal to the Outside"));
 			AddSuffix("DUMPEXPERIMENTS", new NoArgsVoidSuffix(DumpExperiments));
 			AddSuffix("NEUTRALIZE", new SetSuffix<BooleanValue>(() => evacontrol.Neutralize, value => evacontrol.Neutralize = value));
-
-			
+			AddSuffix("STARBOARD", new SetSuffix<ScalarValue>(() => evacontrol.MovementThrottle.x, value => { var throttle = evacontrol.MovementThrottle; throttle.x = Mathf.Clamp(value, -1, 1); evacontrol.MovementThrottle = throttle; }));
+			AddSuffix("TOP", new SetSuffix<ScalarValue>(() => evacontrol.MovementThrottle.y, value => { var throttle = evacontrol.MovementThrottle; throttle.y = Mathf.Clamp(value, -1, 1); evacontrol.MovementThrottle = throttle; }));
+			AddSuffix("FORE", new SetSuffix<ScalarValue>(() => evacontrol.MovementThrottle.z, value => { var throttle = evacontrol.MovementThrottle; throttle.z = Mathf.Clamp(value, -1, 1); evacontrol.MovementThrottle = throttle; }));
+			AddSuffix("MOVETHROTTLE", new SetSuffix<Vector>(() => new Vector(evacontrol.MovementThrottle), value => evacontrol.MovementThrottle = value.ToVector3()));
+			AddSuffix("JUMP", new NoArgsVoidSuffix(Jump));
+			AddSuffix("SPRINT", new SetSuffix<BooleanValue>(() => evacontrol.Sprint, value => evacontrol.Sprint = value));
 
 			// Set a default bootfilename, when no other has been set.
 			if (shared.Vessel.isEVA && shared.KSPPart.GetComponentCached<Module.kOSProcessor>(ref _myprocessor).bootFile.ToLower() == "none" )
@@ -64,11 +68,19 @@ namespace kOS.AddOns.kOSEVA
 				myproc.bootFile = "/boot/eva";
 			}
 
-#if DEBUG 
+			CheckEvaController();
+
+#if DEBUG
 			AddSuffix("LS", new NoArgsSuffix<ListValue>(listfields, ""));
 			AddSuffix("LSF", new NoArgsSuffix<ListValue>(listfunctions, ""));
 #endif
 
+		}
+
+		private void Jump()
+		{
+			CheckEvaController();
+			evacontrol.Jump = true;
 		}
 
 		private BooleanValue GetHelmet()

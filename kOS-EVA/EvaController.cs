@@ -56,21 +56,26 @@ namespace EVAMove
 				}
 			}
 		}
+
+		[HarmonyPatch(typeof(KerbalEVA), nameof(KerbalEVA.SetupFSM))]
+		class KerbalEVA_SetupFSM_Patch
+		{
+			static void Postfix(KerbalEVA __instance)
+			{
+				var evaController = __instance.part.FindModuleImplementing<EvaController>();
+				evaController.PatchStateMachine(__instance);
+			}
+		}
 	}
 
 	public class EvaController : PartModule
 	{
 		public Vector3 MovementThrottle
 		{
-			get { return m_movementThrottle; }
+			get => m_movementThrottle;
 			set
 			{
-				if (!m_kosControl)
-				{
-					m_lookDirection = m_kerbalEVA.transform.forward;
-					m_kosControl = true;
-				}
-
+				AssumeControl();
 				// TODO: does this need clamping...?
 				m_movementThrottle = value;
 			}
@@ -78,16 +83,30 @@ namespace EVAMove
 
 		public Vector3 LookDirection
 		{
-			get { return m_lookDirection; }
+			get => m_lookDirection;
 			set
 			{
-				if (!m_kosControl)
-				{
-					m_movementThrottle = Vector3.zero;
-					m_kosControl = true;
-				}
-
+				AssumeControl();
 				m_lookDirection = value.normalized;
+			}
+		}
+
+		public bool Jump
+		{
+			get => m_jump;
+			set
+			{
+				AssumeControl();
+				m_jump = value;
+			}
+		}
+		public bool Sprint
+		{
+			get => m_sprint;
+			set
+			{
+				AssumeControl();
+				m_sprint = value;
 			}
 		}
 
@@ -99,14 +118,63 @@ namespace EVAMove
 
 		Vector3 m_movementThrottle;
 		Vector3 m_lookDirection;
+		bool m_jump;
+		bool m_sprint;
 
 		KerbalEVA m_kerbalEVA;
 		bool m_kosControl;
 
-		public override void OnAwake()
+		public override void OnStart(StartState state)
 		{
-			base.OnAwake();
+			base.OnStart(state);
+		
+			if (!HighLogic.LoadedSceneIsFlight) return;
+
 			m_kerbalEVA = part.FindModuleImplementing<KerbalEVA>();
+		}
+
+		internal void PatchStateMachine(KerbalEVA kerbalEVA)
+		{
+			m_kerbalEVA = kerbalEVA;
+
+			m_kerbalEVA.On_jump_start.OnCheckCondition = JumpStart_CheckCondition;
+			m_kerbalEVA.st_jump.OnEnter += Jump_OnEnter;
+
+			m_kerbalEVA.On_startRun.OnCheckCondition = StartRun_CheckCondition;
+			m_kerbalEVA.On_endRun.OnCheckCondition = EndRun_CheckCondition;
+		}
+
+		private void AssumeControl()
+		{
+			if (!m_kosControl)
+			{
+				m_movementThrottle = Vector3.zero;
+				m_lookDirection = transform.forward;
+				m_jump = false;
+				m_kosControl = true;
+			}
+		}
+
+		private bool EndRun_CheckCondition(KFSMState currentState)
+		{
+			return m_kerbalEVA.VesselUnderControl && (m_kosControl ? !Sprint : !GameSettings.EVA_Run.GetKeyDown());
+		}
+
+		private bool StartRun_CheckCondition(KFSMState currentState)
+		{
+			return m_kerbalEVA.VesselUnderControl && (m_kosControl ? Sprint : GameSettings.EVA_Run.GetKeyDown());
+		}
+
+		private bool JumpStart_CheckCondition(KFSMState currentState)
+		{
+			return m_kerbalEVA.VesselUnderControl && 
+				((m_kosControl && Jump) || GameSettings.EVA_Jump.GetKeyDown()) && 
+				!m_kerbalEVA.PartPlacementMode && !EVAConstructionModeController.MovementRestricted;
+		}
+
+		private void Jump_OnEnter(KFSMState s)
+		{
+			m_jump = false;
 		}
 
 		internal void HandleMovementInput_Prefix()
