@@ -29,8 +29,10 @@ namespace kOS.AddOns.kOSEVA
 		{
 
 			AddSuffix("TOGGLE_RCS", new OneArgsSuffix<BooleanValue>(ToggleRCS, "Switch the RCS of the Pack <on|off>"));
-			AddSuffix("RCS", new SetSuffix<BooleanValue>(GetRCS, SetRCS, "Querry or set the status of the pack RCS"));
-			AddSuffix("LIGHTS", new SetSuffix<BooleanValue>(GetLights, SetLights, "Querry or set the status of the headlamps"));
+			AddSuffix("RCS", new SetSuffix<BooleanValue>(GetRCS, SetRCS, "Query or set the status of the pack RCS"));
+			AddSuffix("LIGHTS", new SetSuffix<BooleanValue>(GetLights, SetLights, "Query or set the status of the headlamps"));
+			AddSuffix("VISOR", new SetSuffix<BooleanValue>(GetVisor, SetVisor));
+			AddSuffix("HELMET", new SetSuffix<BooleanValue>(GetHelmet, SetHelmet));
 			AddSuffix("DOEVENT", new TwoArgsSuffix<Suffixed.Part.PartValue, StringValue>(DoEvent, "Performs a Event on a others vessel part."));
 			AddSuffix("LADDER_RELEASE", new NoArgsVoidSuffix(LadderRelease, "Release a grabbed ladder"));
 			AddSuffix("LADDER_GRAB", new NoArgsVoidSuffix(LadderGrab, "Grab a nearby ladder"));
@@ -50,7 +52,13 @@ namespace kOS.AddOns.kOSEVA
 			AddSuffix("STOPALLANIMATIONS", new NoArgsVoidSuffix(StopAllAnimations, "Stops all Animations"));
 			AddSuffix(new[] { "GOEVA", "EVA" }, new OneArgsSuffix<CrewMember>(GoEVA, "Compliments a Kerbal to the Outside"));
 			AddSuffix("DUMPEXPERIMENTS", new NoArgsVoidSuffix(DumpExperiments));
-			
+			AddSuffix("NEUTRALIZE", new SetSuffix<BooleanValue>(() => evacontrol.Neutralize, value => evacontrol.Neutralize = value));
+			AddSuffix("STARBOARD", new SetSuffix<ScalarValue>(() => evacontrol.MovementThrottle.x, value => { var throttle = evacontrol.MovementThrottle; throttle.x = Mathf.Clamp(value, -1, 1); evacontrol.MovementThrottle = throttle; }));
+			AddSuffix("TOP", new SetSuffix<ScalarValue>(() => evacontrol.MovementThrottle.y, value => { var throttle = evacontrol.MovementThrottle; throttle.y = Mathf.Clamp(value, -1, 1); evacontrol.MovementThrottle = throttle; }));
+			AddSuffix("FORE", new SetSuffix<ScalarValue>(() => evacontrol.MovementThrottle.z, value => { var throttle = evacontrol.MovementThrottle; throttle.z = Mathf.Clamp(value, -1, 1); evacontrol.MovementThrottle = throttle; }));
+			AddSuffix("MOVETHROTTLE", new SetSuffix<Vector>(() => new Vector(evacontrol.MovementThrottle), value => evacontrol.MovementThrottle = value.ToVector3()));
+			AddSuffix("JUMP", new NoArgsVoidSuffix(Jump));
+			AddSuffix("SPRINT", new SetSuffix<BooleanValue>(() => evacontrol.Sprint, value => evacontrol.Sprint = value));
 
 			// Set a default bootfilename, when no other has been set.
 			if (shared.Vessel.isEVA && shared.KSPPart.GetComponentCached<Module.kOSProcessor>(ref _myprocessor).bootFile.ToLower() == "none" )
@@ -60,11 +68,50 @@ namespace kOS.AddOns.kOSEVA
 				myproc.bootFile = "/boot/eva";
 			}
 
-#if DEBUG 
+			CheckEvaController();
+
+#if DEBUG
 			AddSuffix("LS", new NoArgsSuffix<ListValue>(listfields, ""));
 			AddSuffix("LSF", new NoArgsSuffix<ListValue>(listfunctions, ""));
 #endif
 
+		}
+
+		private void Jump()
+		{
+			CheckEvaController();
+			evacontrol.Jump = true;
+		}
+
+		private BooleanValue GetHelmet()
+		{
+			CheckEvaController();
+			return kerbaleva.isHelmetEnabled;
+		}
+
+		private void SetHelmet(BooleanValue value)
+		{
+			CheckEvaController();
+			kerbaleva.ToggleHelmet(value);
+		}
+
+		private BooleanValue GetVisor()
+		{
+			CheckEvaController();
+			return kerbaleva.visorState == KerbalEVA.VisorStates.Lowered;
+		}
+
+		private void SetVisor(BooleanValue value)
+		{
+			CheckEvaController();
+			if (value)
+			{
+				kerbaleva.LowerVisor();
+			}
+			else
+			{
+				kerbaleva.RaiseVisor();
+			}
 		}
 
 		private void DumpExperiments()
@@ -476,30 +523,52 @@ namespace kOS.AddOns.kOSEVA
 
 			Command command = (Command)Enum.Parse(typeof(Command), direction, true);
 			Debug.Log("EVA Command: " + command.ToString());
-			this.evacontrol.order = command;
+			
+			switch (command)
+			{
+				case Command.Forward:
+					evacontrol.MovementThrottle = new Vector3(0, 0, 1);
+					break;
+				case Command.Backward:
+					evacontrol.MovementThrottle = new Vector3(0, 0, -1);
+					break;
+				case Command.Left:
+					evacontrol.MovementThrottle = new Vector3(-1, 0, 0);
+					break;
+				case Command.Right:
+					evacontrol.MovementThrottle = new Vector3(1, 0, 0);
+					break;
+				case Command.Up:
+					evacontrol.MovementThrottle = new Vector3(0, 1, 0);
+					break;
+				case Command.Down:
+					evacontrol.MovementThrottle = new Vector3(0, -1, 0);
+					break;
+				case Command.LookAt:
+				case Command.Stop:
+					evacontrol.MovementThrottle = Vector3.zero;
+					break;
+			}
 		}
 
 		private void TurnLeft(ScalarValue degrees)
 		{
 			if (!shared.Vessel.isEVA) { return; }
 			CheckEvaController();
-			this.evacontrol.lookdirection = v_rotate(kerbaleva.vessel.transform.forward, kerbaleva.vessel.transform.right, -degrees.GetDoubleValue());
-			this.evacontrol.order = Command.LookAt;
+			this.evacontrol.LookDirection = v_rotate(kerbaleva.vessel.transform.forward, kerbaleva.vessel.transform.right, -degrees.GetDoubleValue());
 		}
 		private void TurnRight(ScalarValue degrees)
 		{
 			if (!shared.Vessel.isEVA) { return; }
 			CheckEvaController();
-			this.evacontrol.lookdirection = v_rotate(kerbaleva.vessel.transform.forward, kerbaleva.vessel.transform.right, degrees.GetDoubleValue());
-			this.evacontrol.order = Command.LookAt;
+			this.evacontrol.LookDirection = v_rotate(kerbaleva.vessel.transform.forward, kerbaleva.vessel.transform.right, degrees.GetDoubleValue());
 		}
 
 		private void TurnTo(Vector direction)
 		{
 			if (!shared.Vessel.isEVA) { return; }
 			CheckEvaController();
-			this.evacontrol.lookdirection = direction.ToVector3D();
-			this.evacontrol.order = Command.LookAt;
+			this.evacontrol.LookDirection = direction.ToVector3D();
 		}
 		#endregion
 
