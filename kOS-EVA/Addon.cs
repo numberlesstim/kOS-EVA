@@ -59,6 +59,7 @@ namespace kOS.AddOns.kOSEVA
 			AddSuffix("MOVETHROTTLE", new SetSuffix<Vector>(() => new Vector(evacontrol.MovementThrottle), value => evacontrol.MovementThrottle = value.ToVector3()));
 			AddSuffix("JUMP", new NoArgsVoidSuffix(Jump));
 			AddSuffix("SPRINT", new SetSuffix<BooleanValue>(() => evacontrol.Sprint, value => evacontrol.Sprint = value));
+			AddSuffix("STATE", new Suffix<StringValue>(() => kerbaleva.fsm.currentState.name));
 
 			// Set a default bootfilename, when no other has been set.
 			if (shared.Vessel.isEVA && shared.KSPPart.GetComponentCached<Module.kOSProcessor>(ref _myprocessor).bootFile.ToLower() == "none" )
