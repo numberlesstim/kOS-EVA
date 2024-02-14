@@ -60,6 +60,7 @@ namespace kOS.AddOns.kOSEVA
 			AddSuffix("JUMP", new NoArgsVoidSuffix(Jump));
 			AddSuffix("SPRINT", new SetSuffix<BooleanValue>(() => evacontrol.Sprint, value => evacontrol.Sprint = value));
 			AddSuffix("STATE", new Suffix<StringValue>(() => kerbaleva.fsm.currentState.name));
+            		AddSuffix("TRANSFERCREW", new TwoArgsSuffix<BooleanValue, CrewMember, Suffixed.Part.PartValue>(TransferCrew, "Transfer CrewMember to the Part"));
 
 			// Set a default bootfilename, when no other has been set.
 			if (shared.Vessel.isEVA && shared.KSPPart.GetComponentCached<Module.kOSProcessor>(ref _myprocessor).bootFile.ToLower() == "none" )
@@ -570,6 +571,46 @@ namespace kOS.AddOns.kOSEVA
 			if (!shared.Vessel.isEVA) { return; }
 			CheckEvaController();
 			this.evacontrol.LookDirection = direction.ToVector3D();
+		}
+  		
+    		private BooleanValue TransferCrew(CrewMember kerbal, Suffixed.Part.PartValue aimedPart)
+		{
+    			Part destPart = null;
+		    	ProtoCrewMember safeCrewMember = null;
+
+    			foreach (var vesselPart in shared.Vessel.Parts)
+    			{
+        			if (vesselPart.uid() == aimedPart.Part.uid())
+        			{
+            				destPart = vesselPart;
+            				break;
+        			}
+    			}
+    			
+       			foreach (var vesselCrew in shared.Vessel.GetVesselCrew())
+    			{
+        			if (vesselCrew.name.ToLower() == kerbal.Name.ToLower())
+        			{
+            				safeCrewMember = vesselCrew;
+            				break;
+        			}
+    			}
+
+    			if (safeCrewMember == null || destPart == null)
+    			{
+        			return false;
+    			}
+
+    			var transfer = CrewTransfer.Create(safeCrewMember.seat.part, safeCrewMember, delegate { });
+    			try
+    			{
+        			transfer.MoveCrewTo(destPart);
+    			}
+    			catch (Exception ex)
+    			{
+        			Debug.LogWarning("kOSEVA: CrewTransfer failed: " + ex.ToString());
+    			}
+    			return true;
 		}
 		#endregion
 
