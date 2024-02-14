@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Linq;
 using System.Text;
@@ -13,6 +13,7 @@ using EVAMove;
 
 using System.Collections.Generic;
 using System.Reflection;
+using kOS.Utilities;
 
 namespace kOS.AddOns.kOSEVA
 {
@@ -60,7 +61,7 @@ namespace kOS.AddOns.kOSEVA
 			AddSuffix("JUMP", new NoArgsVoidSuffix(Jump));
 			AddSuffix("SPRINT", new SetSuffix<BooleanValue>(() => evacontrol.Sprint, value => evacontrol.Sprint = value));
 			AddSuffix("STATE", new Suffix<StringValue>(() => kerbaleva.fsm.currentState.name));
-            		AddSuffix("TRANSFERCREW", new TwoArgsSuffix<BooleanValue, CrewMember, Suffixed.Part.PartValue>(TransferCrew, "Transfer CrewMember to the Part"));
+            AddSuffix("TRANSFERCREW", new TwoArgsSuffix<BooleanValue, CrewMember, Suffixed.Part.PartValue>(TransferCrew, "Transfer CrewMember to the Part"));
 
 			// Set a default bootfilename, when no other has been set.
 			if (shared.Vessel.isEVA && shared.KSPPart.GetComponentCached<Module.kOSProcessor>(ref _myprocessor).bootFile.ToLower() == "none" )
@@ -596,7 +597,7 @@ namespace kOS.AddOns.kOSEVA
         			}
     			}
 
-    			if (safeCrewMember == null || destPart == null)
+    			if (safeCrewMember == null || destPart == null || destPart.protoModuleCrew.Count() >= destPart.CrewCapacity)
     			{
         			return false;
     			}
